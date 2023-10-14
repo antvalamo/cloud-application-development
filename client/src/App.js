@@ -2,22 +2,8 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import './App.css';
 
-var createError = require('http-errors');
-var express = require('express');
-var path = require('path');
-var cookieParser = require('cookie-parser');
-var logger = require('morgan');
-const cors = require('cors');
-
-const config = require('./config');
-
-var app = express();
-
-app.use(cors(
-  config.application.cors.server
-));;
-
 function App() {
+
   const [file, setFile] = useState(null);
   const [name, setName] = useState('');
   const [content, setContent] = useState('');
@@ -35,12 +21,18 @@ function App() {
     formData.append('tags', tags);
 
     try {
-      await axios.post('http://localhost:5000/upload', formData, {
+      const response = await axios.post('http://localhost:5000/upload', formData, {
         headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+          'Content-Type': 'multipart/form-data',
+        },
+        withCredentials: true,
       });
-      alert('File uploaded successfully.');
+      if (response.status === 200) {
+        alert('File uploaded successfully.');
+      } else {
+        console.error('Error uploading file. Status:', response.status);
+        alert('Error uploading file. Please try again.');
+      }
     } catch (error) {
       console.error('Error uploading file:', error);
       alert('Error uploading file. See the console for more details.');

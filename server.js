@@ -2,6 +2,7 @@ const express = require('express');
 const mysql = require('mysql2');
 const multer = require('multer');
 const path = require('path');
+const cors = require('cors'); // Importa el módulo de CORS
 
 const app = express();
 const port = 5000;
@@ -30,10 +31,17 @@ const storage = multer.diskStorage({
   }
 });
 
-
 const upload = multer({ storage: storage });
 
 app.use(express.json());
+
+// Configuración de CORS
+const corsOptions = {
+  origin: 'http://localhost:3000', // Permitir solicitudes solo desde este origen
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Métodos HTTP permitidos
+  credentials: true, // Permitir incluir cookies en las solicitudes (si es aplicable)
+};
+app.use(cors(corsOptions)); // Aplica las opciones de CORS a tu aplicación Express
 
 app.post('/upload', upload.single('file'), (req, res) => {
   const { name, content, tags } = req.body;
