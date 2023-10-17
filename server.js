@@ -1,5 +1,5 @@
 const express = require('express');
-const mysql = require('mysql2');
+const mysql = require('mysql2/promise');
 const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
@@ -7,19 +7,14 @@ const cors = require('cors');
 const app = express();
 const port = 5000;
 
-const connection = mysql.createConnection({
+const pool = mysql.createPool({
   host: 'localhost',
   user: 'antonio',
   password: 'root',
-  database: 'multimedia_db'
-});
-
-connection.connect((err) => {
-  if (err) {
-    console.error('Error connecting to database:', err);
-    return;
-  }
-  console.log('Connection to the database established.');
+  database: 'multimedia_db',
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0
 });
 
 const storage = multer.diskStorage({
@@ -35,35 +30,38 @@ const upload = multer({ storage: storage });
 
 app.use(express.json());
 
-// CORS configuration
 const corsOptions = {
-  origin: 'http://localhost:3000', // Allow requests only from this origin
-  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Allowed HTTP methods
-  credentials: true, // Allow cookies to be included in requests
+  origin: 'http://localhost:3000',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true
 };
-app.use(cors(corsOptions)); // Apply CORS options to your Express application
+app.use(cors(corsOptions));
 
-app.post('/upload', upload.single('file'), (req, res) => {
+app.post('/upload', upload.single('file'), async (req, res) => {
   const { name, content, tags } = req.body;
   const filename = req.file.filename;
   const createdAt = new Date();
-  const sql = 'INSERT INTO multimedia (name, content, tags, filename, created_at) VALUES (?, ?, ?, ?, ?)';
-  connection.query(sql, [name, content, tags, filename, createdAt], (err, result) => {
-    if (err) {
-      console.error('Error inserting data into database:', err);
-      return res.status(500).json({ error: 'Error uploading file.' });
-    }
+  try {
+    const connection = await pool.getConnection();
+    const [result] = await connection.execute(
+      'INSERT INTO multimedia (name, content, tags, filename, created_at) VALUES (?, ?, ?, ?, ?)',
+      [name, content, tags, filename, createdAt]
+    );
+    connection.release();
     res.json({ message: 'Media file uploaded successfully.' });
-  });
+  } catch (error) {
+    console.error('Error inserting data into database:', error);
+    res.status(500).json({ error: 'Error uploading file.' });
+  }
 });
 
 app.get('/search', async (req, res) => {
   const { query } = req.query;
   try {
-    const connection = await pool.getConnection();
+    const connection = await pool.getConnection(async (conn) => conn);
     const [results] = await connection.execute(
-      `SELECT * FROM multimedia WHERE name LIKE ? OR content LIKE ? OR tags LIKE ?`,
-      [`%${query}%`, `%${query}%`, `%${query}%`]
+      'SELECT * FROM multimedia WHERE name LIKE CONCAT("%", ?, "%") OR content LIKE CONCAT("%", ?, "%") OR tags LIKE CONCAT("%", ?, "%")',
+      [query, query, query]
     );
     connection.release();
     res.json(results);

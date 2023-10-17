@@ -106,7 +106,7 @@ function App() {
             onChange={(e) => setQuery(e.target.value)}
           />
           <button className="search-button" onClick={handleSearch}>Search</button>
-          {results.length > 0 &&
+          {results.length > 0 ? (
             results.map((result) => (
               <div key={result.id}>
                 <h3>{result.name}</h3>
@@ -115,7 +115,10 @@ function App() {
                 <p>Name: {result.filename}</p>
                 <p>Creation date: {result.created_at}</p>
               </div>
-            ))}
+            ))
+          ) : (
+            <p>No results found.</p>
+          )}
         </div>
       </div>
     </div>
