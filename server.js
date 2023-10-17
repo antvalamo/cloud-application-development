@@ -47,7 +47,6 @@ app.post('/upload', upload.single('file'), (req, res) => {
   const { name, content, tags } = req.body;
   const filename = req.file.filename;
   const createdAt = new Date();
-
   const sql = 'INSERT INTO multimedia (name, content, tags, filename, created_at) VALUES (?, ?, ?, ?, ?)';
   connection.query(sql, [name, content, tags, filename, createdAt], (err, result) => {
     if (err) {
@@ -56,6 +55,22 @@ app.post('/upload', upload.single('file'), (req, res) => {
     }
     res.json({ message: 'Media file uploaded successfully.' });
   });
+});
+
+app.get('/search', async (req, res) => {
+  const { query } = req.query;
+  try {
+    const connection = await pool.getConnection();
+    const [results] = await connection.execute(
+      `SELECT * FROM multimedia WHERE name LIKE ? OR content LIKE ? OR tags LIKE ?`,
+      [`%${query}%`, `%${query}%`, `%${query}%`]
+    );
+    connection.release();
+    res.json(results);
+  } catch (error) {
+    console.error('Error while searching for files:', error);
+    res.status(500).json({ error: 'Internal server error.' });
+  }
 });
 
 app.listen(port, () => {
