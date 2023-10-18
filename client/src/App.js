@@ -50,6 +50,23 @@ function App() {
     }
   };
 
+  const handleDownload = (fileId, filename) => {
+    fetch(`/api/files/${fileId}`)
+      .then(response => response.blob())
+      .then(blob => {
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+      })
+      .catch(error => {
+        console.error('Error downloading the file:', error);
+      });
+  };
+
   return (
     <div style={{ backgroundColor: '#3498db', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
       <div className="form-container" style={{ backgroundColor: '#3498db', color: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
@@ -114,6 +131,7 @@ function App() {
                 <p>Tags: {result.tags}</p>
                 <p>Name: {result.filename}</p>
                 <p>Creation date: {result.created_at}</p>
+                <button onClick={() => handleDownload(result.id, result.filename)}>Download</button>
               </div>
             ))
           ) : (
