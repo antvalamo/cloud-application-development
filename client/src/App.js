@@ -50,23 +50,6 @@ function App() {
     }
   };
 
-  const handleDownload = (fileId, filename) => {
-    fetch(`/api/files/${fileId}`)
-      .then(response => response.blob())
-      .then(blob => {
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = filename;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-      })
-      .catch(error => {
-        console.error('Error downloading the file:', error);
-      });
-  };
-
   return (
     <div style={{ backgroundColor: '#3498db', minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
       <div className="form-container" style={{ backgroundColor: '#3498db', color: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
@@ -111,10 +94,9 @@ function App() {
             placeholder="Enter tags (separated by commas)"
             value={tags}
             onChange={(e) => setTags(e.target.value)}
-            style={{ width: '210px', marginRight: '10px', '::placeholder': { fontSize: '16px' } }}
           />
         </div>
-        <button className="upload-button" style={{ backgroundColor: '#2980b9', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '5px', marginTop: '10px' }} onClick={handleUpload}>Upload file</button>
+        <button className="upload-button" onClick={handleUpload}>Upload file</button>
         <div className="search-section" style={{ marginTop: '20px' }}>
           <input
             type="text"
@@ -124,16 +106,32 @@ function App() {
           />
           <button className="search-button" onClick={handleSearch}>Search</button>
           {results.length > 0 ? (
-            results.map((result) => (
-              <div key={result.id}>
-                <h3>{result.name}</h3>
-                <p>{result.content}</p>
-                <p>Tags: {result.tags}</p>
-                <p>Name: {result.filename}</p>
-                <p>Creation date: {result.created_at}</p>
-                <button onClick={() => handleDownload(result.id, result.filename)}>Download</button>
-              </div>
-            ))
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '20px', fontSize: '14px' }}>
+              <thead>
+                <tr>
+                  <th style={{ border: '1px solid white', backgroundColor: '#3498db', color: 'white', padding: '12px' }}>Name</th>
+                  <th style={{ border: '1px solid white', backgroundColor: '#3498db', color: 'white', padding: '12px' }}>Content</th>
+                  <th style={{ border: '1px solid white', backgroundColor: '#3498db', color: 'white', padding: '12px' }}>Tags</th>
+                  <th style={{ border: '1px solid white', backgroundColor: '#3498db', color: 'white', padding: '12px' }}>Creation Date</th>
+                  <th style={{ border: '1px solid white', backgroundColor: '#3498db', color: 'white', padding: '12px' }}>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {results.map((result) => (
+                  <tr key={result.id}>
+                    <td style={{ border: '1px solid white', padding: '12px' }}>{result.name}</td>
+                    <td style={{ border: '1px solid white', padding: '12px' }}>{result.content}</td>
+                    <td style={{ border: '1px solid white', padding: '12px' }}>{result.tags}</td>
+                    <td style={{ border: '1px solid white', padding: '12px' }}>{new Date(result.created_at).toLocaleString()}</td>
+                    <td style={{ border: '1px solid white', padding: '12px' }}>
+                      <a href={`http://localhost:5000/download/${result.filename}`} download>
+                        <button style={{ backgroundColor: '#2980b9', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '5px', cursor: 'pointer', transition: 'background-color 0.3s ease', fontSize: '12px' }}>Download</button>
+                      </a>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           ) : (
             <p>No results found.</p>
           )}

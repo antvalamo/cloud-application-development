@@ -3,6 +3,7 @@ const mysql = require('mysql2/promise');
 const multer = require('multer');
 const path = require('path');
 const cors = require('cors');
+const fs = require('fs');
 
 const app = express();
 const port = 5000;
@@ -68,6 +69,19 @@ app.get('/search', async (req, res) => {
   } catch (error) {
     console.error('Error while searching for files:', error);
     res.status(500).json({ error: 'Internal server error.' });
+  }
+});
+
+app.get('/download/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const filePath = path.join(__dirname, 'uploads', filename);
+  if (fs.existsSync(filePath)) {
+    res.setHeader('Content-Disposition', `attachment; filename=${filename}`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    const fileStream = fs.createReadStream(filePath);
+    fileStream.pipe(res);
+  } else {
+    res.status(404).json({ error: 'File not found.' });
   }
 });
 
