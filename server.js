@@ -9,13 +9,13 @@ const app = express();
 const port = 5000;
 
 const pool = mysql.createPool({
-  host: 'localhost',
-  user: 'antonio',
+  user: 'root',
   password: 'root',
   database: 'multimedia_db',
+  socketPath: 'ivory-streamer-404709:europe-southwest1:multimedia',
   waitForConnections: true,
   connectionLimit: 10,
-  queueLimit: 0
+  queueLimit: 0,
 });
 
 const storage = multer.diskStorage({
@@ -32,7 +32,7 @@ const upload = multer({ storage: storage });
 app.use(express.json());
 
 const corsOptions = {
-  origin: 'http://localhost:3000',
+  origin: '*',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true
 };
