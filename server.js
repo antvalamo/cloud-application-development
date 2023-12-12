@@ -6,7 +6,24 @@ const cors = require('cors');
 const fs = require('fs');
 
 const app = express();
-const port = 5000;
+
+const port = process.env.PORT || 5000;
+
+if (process.env.NODE_ENV === 'production') {
+  app.use(express.static(path.join(__dirname, 'client', 'build')));
+
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'client', 'build', 'index.html'));
+  });
+}
+
+app.get('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'build', 'favicon.ico'));
+});
+
+app.use('/favicon.ico', (req, res) => {
+  res.sendFile(path.join(__dirname, 'client', 'build', 'favicon.ico'));
+});
 
 const pool = mysql.createPool({
   user: 'root',
@@ -24,7 +41,7 @@ const storage = multer.diskStorage({
   },
   filename: (req, file, cb) => {
     cb(null, Date.now() + path.extname(file.originalname));
-  }
+  },
 });
 
 const upload = multer({ storage: storage });
@@ -34,7 +51,7 @@ app.use(express.json());
 const corsOptions = {
   origin: '*',
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-  credentials: true
+  credentials: true,
 };
 app.use(cors(corsOptions));
 
